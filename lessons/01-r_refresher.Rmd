@@ -1,0 +1,261 @@
+# R Refresher 
+
+This lesson is a brief refresher on R. You all have had at least one R class and thus most of this should be familiar. 
+
+One thing worth noting is that we'll be using a mix of base R and the tidyverse set of packages.  For those of you who haven't used tidyverse, those sets of packages all for a more natural and easy to follow R syntax.  One goal of this lesson is to introduce tidyverse to those who haven't used it, and more base R who learned the tidyverse-centric approach.  You can learn more about tidyverse through their wonderful help files [here](https://www.tidyverse.org/)
+
+## Installing and loading packages
+
+To install tidyverse, you can run the following code. 
+```{r, eval=FALSE}
+install.packages("tidyverse")
+```
+
+While you only have to install packages once, you need to load them into your environment each time.  Thus, the very first lines of code should be loading the packages that you need. You load each package using the `library()` function.  
+
+```{r,eval=TRUE}
+library(tidyverse)
+```
+You can see that it is telling you what packages were loaded as tidyverse is actually a family of related packages.  It also tells you if there are any conflicts.  In this case there are a couple tidyverse function names that overlap with the same function names in other packages...  here it's just telling you how it's dealing with this.  
+
+
+## Loading data into your environment
+
+The next step after getting your packages loaded is bringing your data into your local environment.  There are several ways to do this.  Often, I'll be providing a URL for a google spreadsheet that will just load directly.  For example:
+```{r}
+beer <- read_csv("https://docs.google.com/spreadsheets/d/18Iux-10Ggj2qLNEgH5WJGGUNTKET9Tpy3HHl1gc6L9Y/gviz/tq?tqx=out:csv")
+```
+
+This brings in data that I scraped from the website www.beeradvocate.com.  Note that we use the function `read_csv()`, which is the tidyverse version of base R's `read.csv()`. I like the tidverse version as it is more explicit in telling you what datatypes it imported each column as (in this case doubles - or numeric, and character strings). Also note that we assigned the data to the object `beer`.
+
+There are other ways to bring data into your environment.  One way is to use the `file.choose()` function inside `read_csv()`.  This will allow a graphical user interface (GUI) to pop up so you can go and manually select your dataframe wherever you downloaded it on your computer. For example:
+```{r, eval = FALSE}
+my_df <- read_csv(file.choose())
+```
+
+Alternatively, you can use a filepath specific to your local machine:
+```{r, eval=FALSE}
+my_df <- read_csv('/Users/nick_dirienzo/Documents/R/intro/data/beer.csv')
+```
+
+There are pros and cons to each method.  
+
+* Using the `file.choose()` to get a GUI is fast, but that means you need to load and reload your data every time you open R or if you make a mistake.  I tend to use that if I'm exploring a dataset for someone else quickly and won't need to do it again.  
+
+* Having your data on the google sheets is great as you can access it from anywhere on any machine, but it takes a few more steps to setup and has file size limitations. Feel free to check out the [tutorial I made](https://docs.google.com/presentation/d/1GenM4fGzVs6g4zCnbUb_fZfRBFnxZYx4B2kHqgdkrCQ/edit?usp=sharing) on how to do this!
+
+* Using filepaths is the fastest method in terms of load time, and they also are not limited by file size (as much).  The downside is that filepaths are specific to your computer, so it's a bit more difficult if you use a few machines or want to work with other people.  
+
+
+## Exploring our dataframe
+
+OK!  Now that we know how to bring in data, let's take a bit to explore it.  Data exploration is a critical step to understanding your data and making sure that any manipulations you've done worked how you expected them to.  You should always be checking and rechecking your data!
+
+To start, let's compare two summary functions to explore our data frame: base R's `summary()` and tidyverse's `glimpse()`
+```{r }
+summary(beer)
+```
+
+```{r }
+glimpse(beer)
+```
+
+Of course, there are pros and cons to each method.
+
+* `summary()` is nice in that it gives you summary statistics (min, max, mean, etc) of your numeric data. This is really useful as you can immediately spot some issues (i.e. some strange values in the year column). Still, it doesn't give you any info on your character columns.  It also doesn't give you any info on parameters of the data frame itself (number of rows or columns).
+
+* `glimpse()` is great in that it simply shows you values from every column so you get an immediate idea of the data contained within. You also get the number of rows (observations) and columns (variables) up top, as well as the datatype of each column. The downside is that you don't have an overall summary of what's contained in each column.  
+  + Some might say that this is just a fancy version of the `head()` function, and in a way it is.  I'd argue it's better, though, as `head()` only shows you as many columns as your console is wide.  Go try `head(beer)` to see what I mean!
+  
+Neither of these methods do a perfect job showing you what type of character values are present in the data. `summary()` shows you nothing, while `glimpse()` shows only what fits in the console window.  Calling the function `unique()` on a specific row is a great way to see what's present. Try it out:
+
+```{r}
+unique(beer$style)
+```
+So we can see that there are five unique styles out of the 1350 observations in our data frame. Go try it on the other columns.  When is this method useful?  When is it not?
+
+
+## Exploring data via plots
+
+Although `summary()` gives summary statistics of your quantitative columns, it doesn't provide any information on the distribution of values within those columns.  For that you need to actually plot out the data with a histogram. 
+
+Histograms in base R are simple.  You just use the function `hist()` and feed it the column you want to use.  You can add additional arguments for bin width, but for simple data exploration you can normally skip that.
+
+```{r}
+hist(beer$rating)
+```
+
+You can also use ggplot for histograms.  ggplot makes overall much more attractive figures and is easier to use for complex figures than base R.  But, for really quick exploration I think ggplot can be a bit slow.  Still, just to get you introduced to syntax, below is the code and associated plot.
+
+You can see that there are three parts to any ggplot call: 
+
+1. The `ggplot()` function with the data frame that you're calling. In this case `beer` 
+
+2. Your aesthetic `aes()` where you tell it what columns from your data are your x and y.
+  i) Histograms only have an x axis so that's all we needed to specify here.
+  
+3. Your `geom_plottype()`.  There are lots of different plot types (i.e. `geom_scatter`, `geom_line`, etc.), but in this case we just need the obvious `geom_histogram`.
+
+```{r}
+ggplot(beer,
+       aes(x = rating)) +
+  geom_histogram()
+```
+
+So, pretty the same plot as base R.  ggplot gave us a warning saying we should select the binwidth rather than using the default, but this is fine for now.  Go ahead and make plots for the other numeric columns. What errors do you find from visual inspection? 
+
+
+## Slicing and dicing - data frame manipulation
+
+Being able to manipulate your data frame is a critical skill for any R workflow.  Here we'll go over how to select out specific rows, columns, as well as how to make totally new columns.
+
+Here's a sample of rows from our data frame.  You can imagine that we might want to pull out just the columns relating to rating and alcohol by volume (abv).  Or we might want to make a new data frame of one specific style (say American IPA), or a certain range of alcohol values. This is something that you'll need to do *all the time*. Thus, we're going to cover how this is done using both base R and tidyverse syntax
+```{r, echo = FALSE}
+kable(beer[c(15, 214, 56, 589, 722, 999, 344),])
+```
+
+
+### Accessing rows
+
+All data frames in R can be accessed using what's called square bracket notation. In such notation the two positions inside square brackets correspond to the rows and columns separated by a comma.  Like this `[row number, column number]`. Leaving one of the two entries blank will print off all the values where the blank exists.  For example:
+```{r}
+beer[5,]
+```
+This prints off every column of the 5th row.  Note that you have to put the data frame name before the square brackets so R knows what data you're trying to access.  Also, you **must** put the comma in there otherwise R will not know if you're trying to access the row or column.
+
+You can also access a range of row values by entering in a sequence of numbers.  Remember you can make sequences by just typing two values separated by a colon i.e. `2:10`.  Let's try it:
+```{r}
+beer[2:10,]
+```
+
+You can also create a list using the combine function c(). entering `c(5,10,20)` will make a list of the values 5, 10, and 20.  Enter that into our square bracket:
+```{r}
+beer[c(5,10,20),]
+```
+
+This is great and all, but what you'll need to do more commonly is get rows that match a specific value, or set of values.  To do this we ask R to return rows where data within a column meet a specific condition.  For example, what if we want only beers where the rating is greater than a 4.0?  In R syntax that would be `beer$rating >= 4.0`. That code entered straight into the console will give you a bunch of TRUE and FALSE values as it's going through and checking within beer which values in the column rating are greater than or equal to 4.0. So just enter that into your square bracket notation to return just those rows where this is TRUE
+
+```{r}
+beer[beer$rating >= 4.0,]
+```
+
+You can do the same in tidyverse syntax using the function `filter()`. You can see that the syntax is a bit different.  For one, you only call the data once.  You then have what's called a 'pipe' which is the `%>%`. The pipe is functionally equivalent to saying 'then'.  Finally, you have the function `filter()`. Thus, you're saying 'take the data frame beer ***then*** filter is for all ratings greater than or equal to 4.0. Note that you don't have to call the data frame when asking for the column rating...  tidyverse does that for you! 
+```{r, eval = FALSE}
+beer %>%
+  filter(rating >= 4.0)
+```
+
+In both base R and tidyverse you can ask for specific character strings in the same way.  What if we just want beers from Illinois?
+```{r}
+beer %>%
+  filter(brewery_state == 'Illinois')
+```
+
+You can add additional filters using additional operators. `&` and `|`, or 'and' and 'or' are the most commonly used.  Let's get just American IPA's from Illinois
+
+```{r }
+beer %>%
+  filter(brewery_state == 'Illinois' & style == 'American IPA')
+```
+
+Numerics can be done in the same manner.  What if we want beer that is either really good (say a rating > 4.0) or is just really alcoholic (avb > 10)?  That would be:
+```{r}
+beer %>%
+  filter(rating > 4.0 | abv > 10)
+```
+
+You can also string tidyverse functions together using extra pipes.  So let's add another filter also select only American IPA's or American Double / Imperial IPA's
+```{r}
+beer %>%
+  filter(rating > 4.0 | abv > 10) %>%
+  filter(style == 'American IPA' | style == 'American Double / Imperial IPA')
+```
+
+Of course, we're doing all this filtering, but not assigning the resulting data frame anywhere.  Let's take the above filtering operation and assign it to a new data frame called beer_high.  Remember, we assign things to objects using the <- operator
+```{r}
+beer_high <- beer %>%
+  filter(rating > 4.0 | abv > 10) %>%
+  filter(style == 'American IPA'| style == 'American Double / Imperial IPA')
+```
+
+Assigning things to objects will result in them not printing to the console, so it's good to go and check that it actually worked.  Let's use `glimpse()` and `unique()` to make sure that beer_high actually contains what we want it to!
+```{r}
+glimpse(beer_high)
+```
+Looks good at a glance as there are way fewer rows as there should be
+```{r}
+unique(beer_high$style)
+```
+And only our two selected styles are present
+
+
+### Accessing specific columns
+
+You can use square bracket notation to get specific columns as well.  You can do this by entering in the numeric value of the column.  For example, rating is the 5th column, so we can enter the following to select it:
+```{r}
+beer[,5]
+```
+
+But it's generally not a good idea to select columns by numeric position as that could change if you add/remove columns.  It's better to instead as for them by name.  
+```{r}
+beer[,'abv']
+```
+
+And if you want multiple columns just make a list!
+```{r}
+beer[,c('abv', 'rating', 'year')]
+```
+
+tidyverse makes this a bit more clear using the `select()` function.  
+```{r}
+beer %>%
+  select('abv', 'rating', 'year')
+```
+
+
+### Creating new columns
+
+Often one will need to manipulate a column and create a new column with the manipulated data. For example, one might want to change units from minutes to seconds by multiplying by 60, or take the average of several columns.  We can do this in both base R and tidyverse. 
+
+Let's consider our beer data again. The `year` column contains the year in which the beer was added to the database, and thus roughly corresponds to the year it came on the market.  Let's use this column and the `number_of_reviews` column to create a new column of how many reviews per year a beer has gotten.  Given these data were collected in 2018, we **1)** need to subtract the year value from 2018 to get years on market, and **2)** divide `number_of_reviews` by this value to get a new variable of reviews per year.
+
+Let's first add a new column `current_year` to the data frame that contains just the value 2018.  We can do this in base R by assigning a new column with the syntax `existing_data_frame_name$new_column_name <- value_for_new_column`
+
+```{r}
+beer$current_year <- 2018
+```
+Check it's there
+```{r}
+glimpse(beer)
+```
+
+Now let's create a new column called `years_on_market` by subtracting `year` from `current_year`
+```{r}
+beer$years_on_market <- beer$current_year - beer$year
+```
+Check!
+```{r}
+glimpse(beer)
+```
+
+Of course, you don't need to create the current_year column. Instead, you can just do that when you create the `years_on_market` column. Let's do it again but all it `years_on_market_2` to show it's the same
+```{r}
+beer$years_on_market_2 <- 2018 - beer$year
+```
+Check!
+```{r}
+glimpse(beer)
+```
+
+tidyverse can do this using the `mutate()` function.  The general syntax is the same as before.  Within `mutate()` you first specify the new column name, then =, then what math or manipulation you want that new column to contain.  Note that as with the other tidyverse functions, you only tell it the data frame name once at first, and the you call columns directly within functions (i.e. you don't need to use the $ operator as you do with base R).
+
+```{r}
+beer <- beer %>%
+  mutate(years_on_market_3 = 2018 - year)
+```
+Check!
+```{r}
+glimpse(beer)
+```
+
+Great! You now have several different ways to create new columns within R.  All are useful and will be used at different points.  Don't worry if you don't see the distinctions between them all. For now, you just need to be aware that there are different way and be able to apply at least one of them to new data. 
