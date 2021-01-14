@@ -1,2 +1,3 @@
-# data_mining
-Content for ISTA 321 textbook
+# ISTA 321 - Data Mining Textbook
+
+Repo for the lessons and data associated with ISTA 321 - Data Mining and Discovery.
